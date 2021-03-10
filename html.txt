@@ -1,0 +1,172 @@
+// 1*
+const modal =document.getElementById('modal');
+const modalShow =document.getElementById('show-modal');
+const modalClose =document.getElementById('close-modal');
+const bookmarkForm =document.getElementById('bookmark-form');
+const websiteNameEl =document.getElementById('website-name');
+const websiteUrlEl =document.getElementById('website-url');
+const bookmarksContainer =document.getElementById('bookmarks-container');
+
+// 95v 7*a LocaStorage and Fetch
+// we first build a global variable. it is an arrey
+let bookmarks = [];
+
+
+// 2* Show Modal, Focus on input
+function showModal() {
+  modal.classList.add('show-modal');
+  websiteNameEl.focus();
+}
+// Modal Event Listener LOVEEEEE
+modalShow.addEventListener('click', showModal);
+// 3* to close the modal box we need;
+modalClose.addEventListener('click', () => modal.classList.remove('show-modal'));
+// 4*a but if we want to close the modal window by clicking anywhere on window we need this;
+// we know the entire screen has an overlay so we use its div id
+// window.addEventListener('click', (e) => console.log(e.target));
+// or in a better way like that, this way of writting condition he said is more elegant (video 93 at the end)
+window.addEventListener('click', (e) => (e.target === modal ? modal.classList.remove('show-modal') : false));
+
+// 5*a Validation Form
+function validate(nameValue, urlValue) {
+  const expression = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+  const regex = new RegExp(expression);
+  if(!nameValue || !urlValue) {//  if both of these were not added
+    alert('please submit values for both fields mate.');
+    return false
+  }
+  // if(urlValue.match(regex)) {
+    // alert('match');
+  // }
+  if(!urlValue.match(regex)) {
+    alert('please provide a valid web adress');
+    return false;
+  }
+  // 6*a Valid, it means if we added info perfectly , it means if we dont go though these two if es above then you are alright True :)
+  return true;
+}
+
+// 10*b Here we build the bookmarks
+function buildBookmarks(){
+  // 11*c Remove all bookmark elements
+  bookmarksContainer.textContent = '';
+
+  // 10*b1 build the items first
+  bookmarks.forEach((bookmark)=>{
+    const {name,url}=bookmark;
+    // console.log(name, url);
+    // 11* Item
+    const item = document.createElement('div');
+    item.classList.add('item');
+    // Close Icon
+    const closeIcon = document.createElement('i');
+    closeIcon.classList.add('fas', 'fa-times');
+    closeIcon.setAttribute('title', 'Delet bookmark');
+    closeIcon.setAttribute('onclick', `deleteBookmark('${url}')`);
+    // Favicon / Link Container
+    const linkInfo = document.createElement('div');
+    linkInfo.classList.add('name');
+    // Favicon
+    const favicon = document.createElement('img');
+    favicon.setAttribute('src', `https://s2.googleusercontent.com/s2/favicons?domain=${url}`);
+    favicon.setAttribute('alt', 'Favicon');
+    // Link
+    const link = document.createElement('a');
+    link.setAttribute('href', `${url}`);
+    link.setAttribute('target', '_blank');
+    link.textContent = name;
+    // Append to bookmarks container
+    linkInfo.append(favicon,link);
+    item.append(closeIcon,linkInfo);
+    // bookmarksContainer.appendChild(item);
+    bookmarksContainer.appendChild(item);
+  });
+}
+
+
+// 9*a now the oposite ( we change from JSON string to javaScript object)
+// Fetch Bookmarks, now we try te get the data (bookmarks)
+function fetchBookmarks() {
+  // Get bookmarks fromlocalStorage if available
+  if(localStorage.getItem('bookmarks')) {
+    bookmarks = JSON.parse(localStorage.getItem('bookmarks'));
+  } else {
+    // when first time sone vists the bookmarks will be empty, so we create a bookmark
+    // Creat bookmarks array in localStorage
+    bookmarks = [
+      {
+        name: 'Jacinto Design',
+        url: 'https://jacinto.design',
+      },
+    ];
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  }
+  // console.log(bookmarks);
+  // 10*a first he deleted all the items he has built them using html . he wants to build them using javaScript
+  buildBookmarks();
+}
+
+// 97v 11*a this is to delete Bookmark
+function deleteBookmark(url) {
+  // console.log('delete URL', url); // whatever url you wanna delete this console log gives that
+  bookmarks.forEach((bookmark, i) => {
+    if(bookmark.url === url) {
+
+      bookmarks.splice(i, 0);
+  }
+});
+ // 11*b
+ // Update bookmarks array in localStorage, re-populate DOM
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  fetchBookmarks();
+}
+
+
+
+// 4*b Handle Data from Form
+function storeBookmark(e){
+  e.preventDefault();
+  // console.log(e);
+  // 4*c
+  const nameValue = websiteNameEl.value;
+  let urlValue = websiteUrlEl.value;
+  // 4*c1  here we try to help users to be allowed to add ankatak without htt
+  if(!urlValue.includes('http://', 'https://')) {
+    urlValue = `https://${urlValue}`;
+  }
+  // console.log(nameValue,urlValue);
+  // 5*b calling the function in 5*a
+  // validate(nameValue, urlValue);
+  // 6*b
+  if(!validate(nameValue, urlValue)) { // if not valid name and url were added
+    return false;
+  }
+  // 7*b
+  // when the above if is alright then it comes to this stage
+  const bookmark = { // we have here bookmark object, then we pass this object to the arrey seen 7*c
+    name: nameValue,
+    url: urlValue,
+  };
+  // 7*c
+  bookmarks.push(bookmark);
+  // console.log(bookmarks);
+  // 8*b
+  // console.log(JSON.stringify(bookmarks));
+
+  // 8*a push what we have to the localStorage
+  // localStorage.setItem('bookmarks', bookmarks); // here the data is saved as a string, to appear what we want (the data) we use JSON method
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); // here the data is saved as a string, to appear what we want (the data) we use JSON method
+
+  // 9*b
+  fetchBookmarks();
+
+  // 7*c1 we reset the boomark form
+  bookmarkForm.reset();
+  websiteNameEl.focus(); // bring us back to websiteNameEl
+}
+
+// 4*a 94v Event Listener
+bookmarkForm.addEventListener('submit', storeBookmark);
+
+// 9*c we use this function here too as well (to see what is there when you open at the begining)
+fetchBookmarks();
